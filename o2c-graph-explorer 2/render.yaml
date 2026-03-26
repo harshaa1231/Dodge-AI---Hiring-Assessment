@@ -40,7 +40,7 @@ services:
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://o2c-backend.onrender.com  # Update after backend deploys
+        value: https://dodge-ai-hiring-assessment.onrender.com  # Update after backend deploys
     headers:
       - path: /*
         name: Cache-Control
