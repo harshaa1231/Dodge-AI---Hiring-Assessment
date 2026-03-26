@@ -734,7 +734,7 @@ export default function App() {
         }
         .reset-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-        .graph-container { position: absolute; top: 42px; left: 0; right: 0; bottom: 24px; }
+        .graph-container { flex: 1; position: relative; min-height: 500px; height: 100%; }
 
         .loading-overlay {
           position: absolute; inset: 0;
@@ -892,7 +892,7 @@ export default function App() {
           <span className="subtitle">SAP Order-to-Cash · Graph Query System</span>
         </header>
 
-        <div style={{ position: "relative", height: "calc(100vh - 90px)", overflow: "hidden" }}>
+        <div style={{ position: "relative", overflow: "hidden" }}>
           <GraphView
             onNodeSelect={setSelectedNode}
             selectedNodes={[]}
