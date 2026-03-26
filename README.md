@@ -2,7 +2,7 @@
 
 A graph-based data exploration and natural language query system for SAP Order-to-Cash data. Users can visualize entity relationships, trace document flows, and ask questions in plain English — powered by LLM-driven SQL generation.
 
-**[Live Demo →](https://o2c-frontend-XXXX.onrender.com)**  ·  **[API Docs →](https://o2c-backend-XXXX.onrender.com/docs)**
+**[Live Demo →](https://dodge-ai-hiring-assessment-frontend.onrender.com/)**
 
 ---
 
