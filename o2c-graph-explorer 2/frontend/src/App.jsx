@@ -80,18 +80,18 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
             selector: "node",
             style: {
               label: "data(label)",
-              "font-size": "10px",
-              "font-family": "'DM Sans', sans-serif",
+              "font-size": "8px",
+              "font-family": "sans-serif",
               "text-wrap": "ellipsis",
-              "text-max-width": "100px",
+              "text-max-width": "80px",
               "text-valign": "bottom",
-              "text-margin-y": 6,
+              "text-margin-y": 4,
               color: "#e2e8f0",
-              "background-color": (ele) => NODE_COLORS[ele.data("type")] || "#6b7280",
-              shape: (ele) => NODE_SHAPES[ele.data("type")] || "ellipse",
-              width: 32,
-              height: 32,
-              "border-width": 2,
+              "background-color": function(ele) { return NODE_COLORS[ele.data("type")] || "#6b7280"; },
+              shape: function(ele) { return NODE_SHAPES[ele.data("type")] || "ellipse"; },
+              width: 20,
+              height: 20,
+              "border-width": 1,
               "border-color": "#1e293b",
               "overlay-opacity": 0,
             },
@@ -101,10 +101,10 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
             style: {
               "border-width": 3,
               "border-color": "#f8fafc",
-              width: 40,
-              height: 40,
+              width: 30,
+              height: 30,
               "font-weight": "bold",
-              "font-size": "12px",
+              "font-size": "10px",
             },
           },
           {
@@ -112,28 +112,31 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
             style: {
               "border-width": 3,
               "border-color": "#fbbf24",
-              width: 40,
-              height: 40,
+              width: 30,
+              height: 30,
               "background-opacity": 1,
               "z-index": 999,
+              "font-size": "10px",
+              label: "data(label)",
             },
           },
           {
             selector: "node.dimmed",
             style: {
-              opacity: 0.2,
+              opacity: 0.15,
+              label: "",
             },
           },
           {
             selector: "edge",
             style: {
-              width: 1.5,
+              width: 1,
               "line-color": "#334155",
               "target-arrow-color": "#334155",
               "target-arrow-shape": "triangle",
               "curve-style": "bezier",
-              "arrow-scale": 0.8,
-              opacity: 0.6,
+              "arrow-scale": 0.6,
+              opacity: 0.4,
             },
           },
           {
@@ -141,7 +144,7 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
             style: {
               "line-color": "#fbbf24",
               "target-arrow-color": "#fbbf24",
-              width: 2.5,
+              width: 2,
               opacity: 1,
               "z-index": 999,
             },
@@ -149,29 +152,40 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
           {
             selector: "edge.dimmed",
             style: {
-              opacity: 0.08,
+              opacity: 0.05,
             },
           },
         ],
         layout: {
-          name: "cose",
-          animate: false,
-          nodeRepulsion: 8000,
-          idealEdgeLength: 120,
-          gravity: 0.3,
-          numIter: 500,
-          padding: 40,
+          name: "concentric",
+          fit: true,
+          padding: 30,
+          minNodeSpacing: 15,
+          concentric: function(node) {
+            var typeOrder = {Customer: 6, SalesOrder: 5, Delivery: 4, BillingDocument: 3, JournalEntry: 2, Payment: 1, Product: 0, Plant: 0};
+            return typeOrder[node.data("type")] || 0;
+          },
+          levelWidth: function() { return 2; },
         },
-        minZoom: 0.1,
-        maxZoom: 4,
+        minZoom: 0.05,
+        maxZoom: 5,
         wheelSensitivity: 0.3,
       });
 
       // Click handler for nodes
-      cyRef.current.on("tap", "node", (evt) => {
-        const node = evt.target;
-        const data = node.data();
+      cyRef.current.on("tap", "node", function(evt) {
+        var node = evt.target;
+        var data = node.data();
         onNodeSelect(data);
+      });
+
+      // Double-click to zoom into neighborhood
+      cyRef.current.on("dbltap", "node", function(evt) {
+        var node = evt.target;
+        var neighborhood = node.neighborhood().add(node);
+        cyRef.current.animate({
+          fit: { eles: neighborhood, padding: 50 }
+        }, { duration: 400 });
       });
 
       setLoading(false);
@@ -186,20 +200,28 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
     cyRef.current.elements().removeClass("highlighted dimmed");
 
     const ids = new Set(searchHighlight);
-    cyRef.current.nodes().forEach((node) => {
+    cyRef.current.nodes().forEach(function(node) {
       if (ids.has(node.data("id"))) {
         node.addClass("highlighted");
       } else {
         node.addClass("dimmed");
       }
     });
-    cyRef.current.edges().forEach((edge) => {
+    cyRef.current.edges().forEach(function(edge) {
       if (ids.has(edge.data("source")) && ids.has(edge.data("target"))) {
         edge.addClass("highlighted");
       } else {
         edge.addClass("dimmed");
       }
     });
+
+    // Zoom to highlighted nodes
+    var highlighted = cyRef.current.nodes(".highlighted");
+    if (highlighted.length > 0 && highlighted.length < 50) {
+      cyRef.current.animate({
+        fit: { eles: highlighted, padding: 60 }
+      }, { duration: 400 });
+    }
   }, [searchHighlight]);
 
   // Node search
@@ -223,7 +245,7 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
     if (!cyRef.current) return;
     const node = cyRef.current.getElementById(nodeId);
     if (node.length) {
-      cyRef.current.animate({ center: { eles: node }, zoom: 2 }, { duration: 400 });
+      cyRef.current.animate({ center: { eles: node }, zoom: 2.5 }, { duration: 400 });
       cyRef.current.elements().removeClass("highlighted dimmed");
       node.addClass("highlighted");
       node.neighborhood().addClass("highlighted");
@@ -285,7 +307,7 @@ function GraphView({ onNodeSelect, selectedNodes, searchHighlight }) {
           onClick={() => {
             if (cyRef.current) {
               cyRef.current.elements().removeClass("highlighted dimmed");
-              cyRef.current.fit(null, 40);
+              cyRef.current.fit(null, 30);
             }
           }}
         >
@@ -380,7 +402,6 @@ function ChatPanel({ onHighlightNodes }) {
     setLoading(true);
 
     // Add a placeholder assistant message that we'll update as chunks arrive
-    const msgIndex = messages.length + 1; // +1 for the user msg we just added
     setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
     try {
@@ -592,7 +613,7 @@ export default function App() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -618,7 +639,6 @@ export default function App() {
           font-family: 'DM Sans', system-ui, sans-serif;
         }
 
-        /* ===== LAYOUT ===== */
         .app-layout {
           display: grid;
           grid-template-columns: 1fr 380px;
@@ -627,7 +647,6 @@ export default function App() {
           gap: 0;
         }
 
-        /* ===== HEADER ===== */
         .app-header {
           grid-column: 1 / -1;
           display: flex;
@@ -637,29 +656,16 @@ export default function App() {
           border-bottom: 1px solid var(--border);
           gap: 10px;
         }
-        .app-header h1 {
-          font-size: 15px;
-          font-weight: 600;
-          letter-spacing: -0.01em;
-        }
-        .app-header .subtitle {
-          font-size: 12px;
-          color: var(--text-muted);
-          font-weight: 400;
-        }
+        .app-header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+        .app-header .subtitle { font-size: 12px; color: var(--text-muted); font-weight: 400; }
         .logo-icon {
-          width: 28px;
-          height: 28px;
+          width: 28px; height: 28px;
           background: linear-gradient(135deg, #3b82f6, #7c3aed);
           border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .logo-icon svg { color: white; }
 
-        /* ===== GRAPH PANEL ===== */
         .graph-panel {
           position: relative;
           display: flex;
@@ -669,9 +675,7 @@ export default function App() {
         }
 
         .graph-toolbar {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          display: flex; align-items: center; gap: 8px;
           padding: 8px 12px;
           background: var(--bg-secondary);
           border-bottom: 1px solid var(--border);
@@ -679,393 +683,197 @@ export default function App() {
         }
 
         .search-box {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 6px;
+          position: relative; display: flex; align-items: center; gap: 6px;
           background: var(--bg-tertiary);
           border: 1px solid var(--border-light);
-          border-radius: 6px;
-          padding: 5px 10px;
-          flex: 0 0 200px;
+          border-radius: 6px; padding: 5px 10px; flex: 0 0 200px;
         }
         .search-box svg { color: var(--text-muted); flex-shrink: 0; }
         .search-box input {
-          background: none;
-          border: none;
-          color: var(--text-primary);
-          font-size: 13px;
-          font-family: inherit;
-          outline: none;
-          width: 100%;
+          background: none; border: none; color: var(--text-primary);
+          font-size: 13px; font-family: inherit; outline: none; width: 100%;
         }
         .search-box input::placeholder { color: var(--text-muted); }
 
         .search-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
+          position: absolute; top: 100%; left: 0; right: 0;
           background: var(--bg-secondary);
           border: 1px solid var(--border-light);
           border-radius: 0 0 6px 6px;
-          max-height: 200px;
-          overflow-y: auto;
-          z-index: 100;
+          max-height: 200px; overflow-y: auto; z-index: 100;
         }
         .search-result {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 10px;
-          cursor: pointer;
-          font-size: 12px;
+          display: flex; align-items: center; gap: 8px;
+          padding: 6px 10px; cursor: pointer; font-size: 12px;
         }
         .search-result:hover { background: var(--bg-hover); }
 
         .type-badge {
-          display: inline-block;
-          padding: 1px 6px;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 600;
-          color: white;
-          text-transform: uppercase;
-          letter-spacing: 0.02em;
-          white-space: nowrap;
+          display: inline-block; padding: 1px 6px; border-radius: 3px;
+          font-size: 10px; font-weight: 600; color: white;
+          text-transform: uppercase; letter-spacing: 0.02em; white-space: nowrap;
         }
 
-        .filter-pills {
-          display: flex;
-          gap: 4px;
-          flex-wrap: wrap;
-        }
+        .filter-pills { display: flex; gap: 4px; flex-wrap: wrap; }
         .pill {
-          padding: 3px 10px;
-          border-radius: 12px;
+          padding: 3px 10px; border-radius: 12px;
           border: 1px solid var(--border-light);
-          background: transparent;
-          color: var(--text-secondary);
-          font-size: 11px;
-          font-family: inherit;
-          cursor: pointer;
-          transition: all 0.15s;
+          background: transparent; color: var(--text-secondary);
+          font-size: 11px; font-family: inherit; cursor: pointer; transition: all 0.15s;
         }
         .pill:hover { background: var(--bg-hover); color: var(--text-primary); }
         .pill.active {
           background: var(--pill-color, var(--accent));
-          border-color: var(--pill-color, var(--accent));
-          color: white;
+          border-color: var(--pill-color, var(--accent)); color: white;
         }
 
         .reset-btn {
-          margin-left: auto;
-          padding: 3px 10px;
-          border-radius: 6px;
-          border: 1px solid var(--border-light);
-          background: transparent;
-          color: var(--text-secondary);
-          font-size: 11px;
-          font-family: inherit;
-          cursor: pointer;
+          margin-left: auto; padding: 3px 10px; border-radius: 6px;
+          border: 1px solid var(--border-light); background: transparent;
+          color: var(--text-secondary); font-size: 11px; font-family: inherit; cursor: pointer;
         }
         .reset-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-        .graph-container {
-          flex: 1;
-          position: relative;
-        }
+        .graph-container { flex: 1; position: relative; }
 
         .loading-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          color: var(--text-muted);
-          font-size: 13px;
+          position: absolute; inset: 0;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 12px; color: var(--text-muted); font-size: 13px;
         }
         .spinner {
-          width: 28px;
-          height: 28px;
-          border: 2px solid var(--border-light);
-          border-top-color: var(--accent);
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
+          width: 28px; height: 28px;
+          border: 2px solid var(--border-light); border-top-color: var(--accent);
+          border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .stats-bar {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 4px 12px;
-          background: var(--bg-secondary);
+          display: flex; align-items: center; gap: 8px;
+          padding: 4px 12px; background: var(--bg-secondary);
           border-top: 1px solid var(--border);
-          font-size: 11px;
-          color: var(--text-muted);
+          font-size: 11px; color: var(--text-muted);
         }
         .stats-bar .divider { opacity: 0.3; }
 
-        /* ===== NODE DETAIL ===== */
         .node-detail {
-          position: absolute;
-          bottom: 40px;
-          left: 12px;
-          width: 320px;
+          position: absolute; bottom: 40px; left: 12px; width: 320px;
           background: var(--bg-secondary);
-          border: 1px solid var(--border-light);
-          border-radius: 8px;
-          padding: 12px;
-          z-index: 50;
+          border: 1px solid var(--border-light); border-radius: 8px;
+          padding: 12px; z-index: 50;
           box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
         .node-detail-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 8px;
+          display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
         }
-        .node-detail h3 {
-          font-size: 14px;
-          font-weight: 600;
-          margin-bottom: 10px;
-          line-height: 1.3;
-        }
+        .node-detail h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; line-height: 1.3; }
         .close-btn {
-          background: none;
-          border: none;
-          color: var(--text-muted);
-          cursor: pointer;
-          font-size: 14px;
-          padding: 2px;
+          background: none; border: none; color: var(--text-muted);
+          cursor: pointer; font-size: 14px; padding: 2px;
         }
-        .node-detail-body {
-          max-height: 200px;
-          overflow-y: auto;
-          margin-bottom: 10px;
-        }
+        .node-detail-body { max-height: 200px; overflow-y: auto; margin-bottom: 10px; }
         .detail-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 3px 0;
-          border-bottom: 1px solid var(--border);
-          font-size: 11px;
-          gap: 8px;
+          display: flex; justify-content: space-between; padding: 3px 0;
+          border-bottom: 1px solid var(--border); font-size: 11px; gap: 8px;
         }
         .detail-key {
-          color: var(--text-muted);
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 10px;
-          flex-shrink: 0;
+          color: var(--text-muted); font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; flex-shrink: 0;
         }
-        .detail-value {
-          color: var(--text-secondary);
-          text-align: right;
-          word-break: break-all;
-        }
-        .node-detail-actions {
-          display: flex;
-          gap: 6px;
-        }
+        .detail-value { color: var(--text-secondary); text-align: right; word-break: break-all; }
+        .node-detail-actions { display: flex; gap: 6px; }
         .node-detail-actions button {
-          flex: 1;
-          padding: 6px;
-          border-radius: 5px;
-          border: 1px solid var(--border-light);
-          background: var(--bg-tertiary);
-          color: var(--text-primary);
-          font-size: 11px;
-          font-family: inherit;
-          cursor: pointer;
-          transition: background 0.15s;
+          flex: 1; padding: 6px; border-radius: 5px;
+          border: 1px solid var(--border-light); background: var(--bg-tertiary);
+          color: var(--text-primary); font-size: 11px; font-family: inherit;
+          cursor: pointer; transition: background 0.15s;
         }
         .node-detail-actions button:hover { background: var(--bg-hover); }
 
-        /* ===== CHAT PANEL ===== */
         .chat-panel {
-          display: flex;
-          flex-direction: column;
+          display: flex; flex-direction: column;
           background: var(--bg-secondary);
-          border-left: 1px solid var(--border);
-          overflow: hidden;
+          border-left: 1px solid var(--border); overflow: hidden;
         }
 
         .chat-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 14px;
-          border-bottom: 1px solid var(--border);
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--text-primary);
+          display: flex; align-items: center; gap: 8px;
+          padding: 10px 14px; border-bottom: 1px solid var(--border);
+          font-size: 13px; font-weight: 600; color: var(--text-primary);
         }
         .chat-header svg { color: var(--text-muted); }
         .clear-btn {
-          margin-left: auto;
-          padding: 2px 8px;
-          border-radius: 4px;
-          border: 1px solid var(--border-light);
-          background: transparent;
-          color: var(--text-muted);
-          font-size: 11px;
-          font-family: inherit;
-          cursor: pointer;
+          margin-left: auto; padding: 2px 8px; border-radius: 4px;
+          border: 1px solid var(--border-light); background: transparent;
+          color: var(--text-muted); font-size: 11px; font-family: inherit; cursor: pointer;
         }
         .clear-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
         .chat-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+          flex: 1; overflow-y: auto; padding: 12px;
+          display: flex; flex-direction: column; gap: 10px;
         }
 
-        .message {
-          max-width: 95%;
-        }
-        .message.user {
-          align-self: flex-end;
-        }
-        .message.assistant {
-          align-self: flex-start;
-        }
+        .message { max-width: 95%; }
+        .message.user { align-self: flex-end; }
+        .message.assistant { align-self: flex-start; }
 
         .message-content {
-          padding: 10px 14px;
-          border-radius: 12px;
-          font-size: 13px;
-          line-height: 1.55;
-          white-space: pre-wrap;
-          word-break: break-word;
+          padding: 10px 14px; border-radius: 12px;
+          font-size: 13px; line-height: 1.55;
+          white-space: pre-wrap; word-break: break-word;
         }
         .message.user .message-content {
-          background: var(--accent);
-          color: white;
-          border-bottom-right-radius: 4px;
+          background: var(--accent); color: white; border-bottom-right-radius: 4px;
         }
         .message.assistant .message-content {
-          background: var(--bg-tertiary);
-          color: var(--text-primary);
-          border-bottom-left-radius: 4px;
+          background: var(--bg-tertiary); color: var(--text-primary); border-bottom-left-radius: 4px;
         }
 
-        .sql-details {
-          margin-top: 8px;
-        }
-        .sql-details summary {
-          font-size: 11px;
-          color: var(--text-muted);
-          cursor: pointer;
-          user-select: none;
-        }
+        .sql-details { margin-top: 8px; }
+        .sql-details summary { font-size: 11px; color: var(--text-muted); cursor: pointer; user-select: none; }
         .sql-details pre {
-          margin-top: 6px;
-          padding: 8px;
-          background: var(--bg-primary);
-          border-radius: 6px;
-          font-size: 11px;
+          margin-top: 6px; padding: 8px; background: var(--bg-primary);
+          border-radius: 6px; font-size: 11px;
           font-family: 'JetBrains Mono', monospace;
-          color: var(--text-secondary);
-          overflow-x: auto;
-          white-space: pre-wrap;
+          color: var(--text-secondary); overflow-x: auto; white-space: pre-wrap;
         }
 
-        .result-count {
-          display: block;
-          margin-top: 6px;
-          font-size: 10px;
-          color: var(--text-muted);
-        }
+        .result-count { display: block; margin-top: 6px; font-size: 10px; color: var(--text-muted); }
         .blocked-badge {
-          display: inline-block;
-          margin-top: 6px;
-          padding: 2px 6px;
-          background: #dc2626;
-          color: white;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 600;
+          display: inline-block; margin-top: 6px; padding: 2px 6px;
+          background: #dc2626; color: white; border-radius: 3px;
+          font-size: 10px; font-weight: 600;
         }
 
         .message.assistant .message-content.streaming::after {
-          content: '▌';
-          animation: blink 0.8s infinite;
-          color: var(--accent);
-          font-weight: bold;
+          content: '▌'; animation: blink 0.8s infinite; color: var(--accent); font-weight: bold;
         }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-
-        .typing-indicator {
-          display: flex;
-          gap: 4px;
-          padding: 4px 0;
-        }
-        .typing-indicator span {
-          width: 6px;
-          height: 6px;
-          background: var(--text-muted);
-          border-radius: 50%;
-          animation: bounce 1.2s infinite ease-in-out;
-        }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         .chat-input-area {
-          display: flex;
-          align-items: flex-end;
-          gap: 8px;
-          padding: 10px 12px;
-          border-top: 1px solid var(--border);
-          background: var(--bg-secondary);
+          display: flex; align-items: flex-end; gap: 8px;
+          padding: 10px 12px; border-top: 1px solid var(--border); background: var(--bg-secondary);
         }
         .chat-input-area textarea {
-          flex: 1;
-          background: var(--bg-tertiary);
-          border: 1px solid var(--border-light);
-          border-radius: 8px;
-          padding: 8px 12px;
-          color: var(--text-primary);
-          font-size: 13px;
-          font-family: inherit;
-          resize: none;
-          outline: none;
-          max-height: 100px;
-          line-height: 1.4;
+          flex: 1; background: var(--bg-tertiary);
+          border: 1px solid var(--border-light); border-radius: 8px;
+          padding: 8px 12px; color: var(--text-primary);
+          font-size: 13px; font-family: inherit; resize: none; outline: none;
+          max-height: 100px; line-height: 1.4;
         }
         .chat-input-area textarea::placeholder { color: var(--text-muted); }
         .chat-input-area textarea:focus { border-color: var(--accent); }
 
         .send-btn {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          border: none;
-          background: var(--accent);
-          color: white;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: background 0.15s;
+          width: 36px; height: 36px; border-radius: 8px; border: none;
+          background: var(--accent); color: white; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; transition: background 0.15s;
         }
         .send-btn:hover { background: #2563eb; }
         .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Scrollbar styling */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
@@ -1073,7 +881,6 @@ export default function App() {
       `}</style>
 
       <div className="app-layout">
-        {/* Header */}
         <header className="app-header">
           <div className="logo-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1085,7 +892,6 @@ export default function App() {
           <span className="subtitle">SAP Order-to-Cash · Graph Query System</span>
         </header>
 
-        {/* Graph (left) */}
         <div style={{ position: "relative" }}>
           <GraphView
             onNodeSelect={setSelectedNode}
@@ -1100,7 +906,6 @@ export default function App() {
           />
         </div>
 
-        {/* Chat (right) */}
         <ChatPanel onHighlightNodes={setHighlightNodes} />
       </div>
     </>
