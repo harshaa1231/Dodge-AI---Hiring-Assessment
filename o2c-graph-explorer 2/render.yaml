@@ -17,7 +17,7 @@ services:
       python db.py --data-dir ./sap-o2c-data --db-path ./data/o2c.db
       uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: GOOGLE_API_KEY
+      - key: Gemini_API_Key
         sync: false  # Set manually in Render dashboard
       - key: DATA_DIR
         value: ./sap-o2c-data
