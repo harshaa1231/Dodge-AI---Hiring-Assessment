@@ -26,7 +26,7 @@ from prompts import (
 # CONFIG
 # ==============================================================================
 
-MODEL_NAME = "models/gemini-1.5-flash"  # Free tier, fast, good at SQL generation
+MODEL_NAME = "gemini-2.5-flash"  # Free tier, fast, good at SQL generation
 
 
 # ==============================================================================
