@@ -1,0 +1,52 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# Deploy both backend and frontend from one repo
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ===== BACKEND (FastAPI) =====
+  - type: web
+    name: o2c-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend
+      python db.py --data-dir ./sap-o2c-data --db-path ./data/o2c.db
+      uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: DATA_DIR
+        value: ./sap-o2c-data
+      - key: DB_PATH
+        value: ./data/o2c.db
+      - key: PYTHON_VERSION
+        value: "3.11"
+    autoDeploy: true
+
+  # ===== FRONTEND (Vite/React static site) =====
+  - type: web
+    name: o2c-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    buildCommand: |
+      cd frontend
+      npm install
+      npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://o2c-backend.onrender.com  # Update after backend deploys
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    autoDeploy: true
