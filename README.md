@@ -5,13 +5,11 @@ A graph-based data exploration and natural language query system for SAP Order-t
 **[Live Demo →](https://dodge-ai-hiring-assessment-frontend.onrender.com/)**
 
 ---
-<img width="1509" height="821" alt="Screenshot 2026-03-26 at 1 35 48 AM" src="https://github.com/user-attachments/assets/9ed2d0b1-a039-4944-9c8f-ac50fcf174e6" />
 
-## Demo
-<img width="1512" height="828" alt="Screenshot 2026-03-26 at 1 43 44 AM" src="https://github.com/user-attachments/assets/71109c32-1b51-4031-b682-07a5daed134b" />
-
-![Graph View](<img width="1509" height="821" alt="Screenshot 2026-03-26 at 1 35 48 AM" src="https://github.com/user-attachments/assets/9ed2d0b1-a039-4944-9c8f-ac50fcf174e6" />)
-![Chat Query](<img width="1512" height="828" alt="Screenshot 2026-03-26 at 1 43 44 AM" src="https://github.com/user-attachments/assets/71109c32-1b51-4031-b682-07a5daed134b" />)
+![Graph View](<img width="1509" height="821" alt="Screenshot 2026-03-26 at 1 35 48 AM" src="https://github.com/user-attachments/assets/5dbc817f-a204-465f-962b-53356ca90ecd" />
+)
+![Chat Query](<img width="1512" height="828" alt="Screenshot 2026-03-26 at 1 43 44 AM" src="https://github.com/user-attachments/assets/8f467435-0bda-47c9-9369-9ae824cb8517" />
+)
 
 ---
 
