@@ -6,10 +6,9 @@ A graph-based data exploration and natural language query system for SAP Order-t
 
 ---
 
-![Graph View](<img width="1509" height="821" alt="Screenshot 2026-03-26 at 1 35 48 AM" src="https://github.com/user-attachments/assets/5dbc817f-a204-465f-962b-53356ca90ecd" />
-)
-![Chat Query](<img width="1512" height="828" alt="Screenshot 2026-03-26 at 1 43 44 AM" src="https://github.com/user-attachments/assets/8f467435-0bda-47c9-9369-9ae824cb8517" />
-)
+![Graph View] <img width="1509" height="821" alt="Screenshot 2026-03-26 at 1 35 48 AM" src="https://github.com/user-attachments/assets/5dbc817f-a204-465f-962b-53356ca90ecd" />
+![Chat Query] <img width="1512" height="828" alt="Screenshot 2026-03-26 at 1 43 44 AM" src="https://github.com/user-attachments/assets/8f467435-0bda-47c9-9369-9ae824cb8517" />
+
 
 ---
 
